@@ -1,21 +1,43 @@
-# Custom AI/ML Accelerator Companion for Microwatt
+# 🚀 Microwatt ML Accelerator (Simulation-Only)
 
-## Overview
-This project explores how the Microwatt POWER CPU core can be extended with a **custom AI/ML accelerator**.  
-The goal is to demonstrate that even a lightweight soft CPU can benefit from dedicated hardware support for matrix computations, enabling **faster inference for small machine learning workloads**. Instead of running all ML computations in software, Microwatt will offload selected operations (e.g., **matrix–vector multiplication**) to a custom accelerator connected via a **memory-mapped interface**.  
+### A Minimal System-on-Chip (SoC) with a Multiply–Accumulate (MAC) Based ML Accelerator  
+Integrated and simulated alongside the **Microwatt soft-core CPU** framework using **VHDL-2008, GHDL, and GTKWave**.
 
-## Implementation Plan
+---
 
-This project will be implemented in **six steps** within the one-month challenge timeframe (5 hours/week).  
+## 🧠 Overview
 
+This project demonstrates the **integration of a lightweight ML accelerator** into a **Microwatt-compatible SoC** using the Wishbone bus interface.
 
-### Step 1. Setup Environment (Week 1)  
-### Step 2. Define Accelerator Interface (Week 1)
-### Step 3. Implement Accelerator (Week 2)
-### Step 4. Write C Driver & Test Code (Week 3)
-### Step 5. Validate in Simulation (Week 3–4) 
+The accelerator performs a simple **Multiply–Accumulate (MAC)** operation:
 
+\[
+\text{Result} = (A \times B) + C
+\]
 
-**Summary:**  
-The workflow is:  
-**Simulation first → Add accelerator → Write C driver → Compare results → Document → Submit.**
+The design was verified entirely in simulation — no FPGA hardware required.  
+It forms a foundation for further ML accelerator extensions (vector MACs, systolic arrays, or CNN blocks).
+
+---
+
+## 🧩 System Architecture
+
+The SoC contains three key components:
+
+| Module | Description |
+|:--------|:-------------|
+| **`ml_accelerator.vhdl`** | Implements a 32-bit multiply-accumulate datapath with Wishbone interface. |
+| **`soc.vhdl`** | Minimal SoC shell connecting the accelerator to clock, reset, and bus ports. |
+| **`soc_tb.vhdl`** | Testbench to drive A, B, and C inputs, trigger computation, and read back results. |
+
+The communication follows the **Wishbone** B4 protocol for register-level bus transactions (`cyc/stb/we/ack` handshakes).
+
+---
+
+## 🧰 Prerequisites
+
+Install the following on **Ubuntu / WSL**:
+
+```bash
+sudo apt update
+sudo apt install ghdl gtkwave
