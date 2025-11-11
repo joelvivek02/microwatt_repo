@@ -5,84 +5,38 @@ use ieee.numeric_std.all;
 library work;
 use work.wishbone_types.all;
 
-entity soc_tb is
-end entity soc_tb;
+entity soc is
+    generic (
+        MEMORY_SIZE : natural := 1024;
+        RAM_INIT_FILE : string := "";
+        CLK_FREQ : positive := 100_000_000;
+        SIM : boolean := true
+    );
+    port (
+        rst        : in  std_logic;
+        system_clk : in  std_logic;
 
-architecture tb of soc_tb is
-    signal clk, rst : std_logic := '0';
-    signal wb_ml_in  : wb_io_master_out := wb_io_master_out_init;
-    signal wb_ml_out : wb_io_slave_out := wb_io_slave_out_init;
-    signal irq_out   : std_logic;
+        -- ML Accelerator interface (simulation only)
+        wb_ml_in  : in  wb_io_master_out;
+        wb_ml_out : out wb_io_slave_out;
+        irq_out   : out std_logic
+    );
+end entity soc;
 
-    constant CLK_PERIOD : time := 10 ns;
+architecture behaviour of soc is
+    signal accel_rst : std_logic;
+    signal accel_irq : std_logic;
 begin
-    -- Clock generation
-    clk_process : process
-    begin
-        clk <= '0'; wait for CLK_PERIOD / 2;
-        clk <= '1'; wait for CLK_PERIOD / 2;
-    end process;
+    accel_rst <= rst;
 
-    -- Instantiate the SoC
-    dut : entity work.soc
+    ml_accel_inst : entity work.ml_accelerator
         port map (
-            rst        => rst,
-            system_clk => clk,
-            wb_ml_in   => wb_ml_in,
-            wb_ml_out  => wb_ml_out,
-            irq_out    => irq_out
+            clk   => system_clk,
+            rst   => accel_rst,
+            wb_in  => wb_ml_in,
+            wb_out => wb_ml_out,
+            irq    => accel_irq
         );
 
-    -- Stimulus process
-    stim_proc : process
-        variable result : integer := 0;
-    begin
-        report "Resetting system..." severity note;
-        rst <= '1'; wait for 20 ns;
-        rst <= '0'; wait for 20 ns;
-
-        -- Write A, B, and C values
-        report "Starting ML Accelerator Write Transaction" severity note;
-
-        wb_ml_in.cyc <= '1';
-        wb_ml_in.stb <= '1';
-        wb_ml_in.we  <= '1';
-
-        wb_ml_in.adr <= (others => '0');
-        wb_ml_in.dat <= std_logic_vector(to_unsigned(3, 32)); wait for 10 ns;
-
-        wb_ml_in.adr <= std_logic_vector(to_unsigned(1, 32));
-        wb_ml_in.dat <= std_logic_vector(to_unsigned(4, 32)); wait for 10 ns;
-
-        wb_ml_in.adr <= std_logic_vector(to_unsigned(2, 32));
-        wb_ml_in.dat <= std_logic_vector(to_unsigned(2, 32)); wait for 10 ns;
-
-        wb_ml_in.adr <= std_logic_vector(to_unsigned(3, 32));
-        wb_ml_in.dat <= (others => '0'); wait for 10 ns;
-
-        wb_ml_in.cyc <= '0';
-        wb_ml_in.stb <= '0';
-        wb_ml_in.we  <= '0';
-
-        wait for 100 ns;
-
-        -- Read result
-        wb_ml_in.cyc <= '1';
-        wb_ml_in.stb <= '1';
-        wb_ml_in.we  <= '0';
-        wb_ml_in.adr <= std_logic_vector(to_unsigned(3, 32));
-
-        wait for 10 ns;
-
-        report "Read complete" severity note;
-        result := to_integer(unsigned(wb_ml_out.dat));
-        report "Result from ML Accelerator (A*B+C): " & integer'image(result) severity note;
-
-        wb_ml_in.cyc <= '0';
-        wb_ml_in.stb <= '0';
-        wait for 500 ns;
-
-        report "Simulation finished." severity note;
-        wait;
-    end process;
-end architecture tb;
+    irq_out <= accel_irq;
+end architecture behaviour;
