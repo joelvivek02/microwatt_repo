@@ -1,0 +1,3 @@
+-- ML Accelerator (Multiply–Accumulate) VHDL Source Code
+-- Performs: result = (A * B) + C
+-- ... (use your full verified code here) ...
