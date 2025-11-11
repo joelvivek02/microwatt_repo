@@ -1,0 +1,1 @@
+-- Simplified Microwatt-compatible SoC integration with ML Accelerator

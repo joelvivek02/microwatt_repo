@@ -1,0 +1,1 @@
+-- Wishbone bus signal type definitions (reused)

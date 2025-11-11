@@ -1,0 +1,1 @@
+-- Testbench verifying MAC accelerator functionality
